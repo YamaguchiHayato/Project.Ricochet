@@ -13,7 +13,8 @@ GameObject:
   - component: {fileID: 3734826552812011404}
   - component: {fileID: 6932748926742912471}
   - component: {fileID: -225935749938937328}
-  - component: {fileID: 7085861537029458457}
+  - component: {fileID: -7879179315611040590}
+  - component: {fileID: -2655246519155796553}
   m_Layer: 0
   m_Name: Bullet
   m_TagString: Untagged
@@ -141,7 +142,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &7085861537029458457
+--- !u!114 &-7879179315611040590
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -150,8 +151,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 2301031708908359646}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 72e685c715a70174e90bf6710f1e8928, type: 3}
+  m_Script: {fileID: 11500000, guid: 85c0d60097919f440be50f3b3428ed45, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::nsApp.nsActor.nsPlayer.Bullet
+  m_EditorClassIdentifier: Assembly-CSharp::nsApp.nsActor.nsPlayer.BulletView
+--- !u!114 &-2655246519155796553
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2301031708908359646}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9b67b3d40bbeb74495a570cf4b7b75e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::nsApp.nsActor.nsPlayer.BulletPresenter
+  _view: {fileID: -7879179315611040590}
   _speed: 20
   _lifeTime: 3

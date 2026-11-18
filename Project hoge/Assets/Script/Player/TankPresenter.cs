@@ -31,7 +31,8 @@ namespace nsApp
                 private void Awake()
                 {
                     // 戦車の判断を初期化する。
-                    _model = new TankModel(
+                    _model = new TankModel
+                     (
                         _view.HullPosition,
                         _view.HullYaw,
                         _moveSpeed,
@@ -61,24 +62,21 @@ namespace nsApp
                 }
 
 
-
                 /// <summary>
                 /// 車体の移動と砲塔の回転を計算する。
                 /// </summary>
                 private void Update()
                 {
                     // 入力を読み取って戦車の判断に反映する。
-                    _model.SetDrive(ReadMoveInput(), ReadRotateInput());
-
+                    _model.SetDrive(ReadDriveDirection());
                     // マウスが指している方向を読み取って戦車の判断に反映する。
                     _model.SetAimDirection(ReadAimDirection());
-
                     // 砲塔の回転を計算して View に反映する。
                     _model.SimulateAim(Time.deltaTime);
-
                     // 砲塔の回転結果を View に反映する。
                     _view.ApplyTurret(_model.TurretYaw);
-
+                    // 弾道予測の点を更新し、確認用の線を View に描かせる。
+                    Vector3[] path = _view.PredictBulletPath(_model.GetTurretForward()); _view.DrawPredictedPath(path);
                     // マウスの左クリックで弾を発射する。
                     if (Input.GetMouseButtonDown(0))
                         _model.TryFire(Time.time);
@@ -107,37 +105,35 @@ namespace nsApp
 
 
                 /// <summary>
-                ///  前進・後退の入力を読む。
+                /// 画面に対する進行方向を読む。
                 /// </summary>
                 /// <returns></returns>
-                private float ReadMoveInput()
+                private Vector3 ReadDriveDirection()
                 {
-                    // 前進・後退の入力を読み取る。
-                    float moveInput = 0.0f;
+                    // 画面上の入力を読み取る。W が奥、S が手前、A が左、D が右。
+                    float x = 0.0f;
+                    float z = 0.0f;
 
-                    // W キーで前進、S キーで後退。
-                    if (Input.GetKey(KeyCode.W))
-                        moveInput += 1.0f;
-                    if (Input.GetKey(KeyCode.S))
-                        moveInput -= 1.0f;
-
-                    // 入力結果を返す。
-                    return moveInput;
-                }
-
-
-                /// <summary>
-                /// 車体の回転の入力を読む。
-                /// </summary>
-                /// <returns></returns>
-                private float ReadRotateInput()
-                {
-                    float rotateInput = 0.0f;
-                    if (Input.GetKey(KeyCode.A))
-                        rotateInput -= 1.0f;
+                    // 対応するキー。
                     if (Input.GetKey(KeyCode.D))
-                        rotateInput += 1.0f;
-                    return rotateInput;
+                        x += 1.0f;
+                    if (Input.GetKey(KeyCode.A))
+                        x -= 1.0f;
+                    if (Input.GetKey(KeyCode.W))
+                        z += 1.0f;
+                    if (Input.GetKey(KeyCode.S))
+                        z -= 1.0f;
+
+                    // カメラが無いときは、入力をそのまま使う。
+                    if (_aimCamera == null)
+                        return new Vector3(x, 0.0f, z);
+
+                    // カメラの水平な前と右を、画面の奥と右にする。
+                    Vector3 forward = _aimCamera.transform.forward;
+                    Vector3 right = _aimCamera.transform.right;
+                    forward.y = 0.0f;
+                    right.y = 0.0f;
+                    return right.normalized * x + forward.normalized * z;
                 }
 
 

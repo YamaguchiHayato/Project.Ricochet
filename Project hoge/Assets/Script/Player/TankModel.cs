@@ -12,39 +12,23 @@ namespace nsApp
             /// </summary>
             public class TankModel
             {
-                /// <summary>
-                /// 発射したときに通知する。
-                /// </summary>
-                public event Action Fired;
-
-                /// <summary>
-                /// 車体の位置。
-                /// </summary>
-                public Vector3 Position => _position;
-
-                /// <summary>
-                /// 車体のヨー角。
-                /// </summary>
-                public float HullYaw => _hullYaw;
-
-                /// <summary>
-                /// 砲塔のヨー角。
-                /// </summary>
-                public float TurretYaw => _turretYaw;
-
+                public event Action Fired;//! 発射したことを通知するイベント。
+                public Vector3 Position => _position;//! 車体の位置。
+                public float HullYaw => _hullYaw;//! 車体のヨー角。
+                public float TurretYaw => _turretYaw; //! 砲塔のヨー角。
                 private readonly float _moveSpeed;     //! 前進速度。
                 private readonly float _backMoveSpeed; //! 後退速度。
                 private readonly float _rotateSpeed;   //! 車体の回転速度。
                 private readonly float _aimSpeed;      //! 砲塔の回転速度。
                 private readonly float _shotInterval;  //! 次の弾までの待ち時間。
-
                 private Vector3 _position;             //! 車体の位置。
                 private float _hullYaw;                //! 車体のヨー角。
                 private float _turretYaw;              //! 砲塔のヨー角。
                 private float _targetTurretYaw;        //! 砲塔が向かうヨー角。
-                private float _moveInput;              //! 前進・後退の入力値。
-                private float _rotateInput;            //! 左右回転の入力値。
+                private Vector3 _driveDirection; //! 進む方向。
                 private float _lastShotTime = -100.0f; //! 前回発射した時刻。
+                private float _rotateInput;            //! 左右回転の入力値。
+
 
                 /// <summary>
                 /// 初期状態とパラメータを受け取る。
@@ -62,16 +46,6 @@ namespace nsApp
                     _shotInterval = shotInterval;
                 }
 
-
-                /// <summary>
-                /// 車体への入力を保存する。
-                /// </summary>
-                public void SetDrive(float moveInput, float rotateInput)
-                {
-                    // 入力値を保存する。前進・後退の入力値は-1.0～1.0の範囲で、回転の入力値も-1.0～1.0の範囲であることを想定している。
-                    _moveInput = moveInput;
-                    _rotateInput = rotateInput;
-                }
 
                 /// <summary>
                 /// 砲塔が向かう水平方向を保存する。
@@ -100,24 +74,27 @@ namespace nsApp
 
 
                 /// <summary>
-                /// 車体を旋回させ、前後に進める。
+                /// 車体を旋回させ、向いている方向へ進める。
                 /// </summary>
                 public void SimulateDrive(float deltaTime)
                 {
-                    // 回転入力がある場合は車体のヨー角を更新する。
-                    // Mathf.Absで入力値の絶対値を取得し、0.01以上の場合のみ回転させる。
-                    if (Mathf.Abs(_rotateInput) >= 0.01f)
-                        _hullYaw += _rotateInput * _rotateSpeed * deltaTime;
-
-                    // 前後の移動入力がある場合は車体の位置を更新する。
-                    if (Mathf.Abs(_moveInput) < 0.01f)
+                    // 入力が無いときは動かない。
+                    if (_driveDirection.sqrMagnitude < 0.01f)
                         return;
 
-                    // 前進・後退の速度を決定する。
-                    // 前進の場合は_moveSpeed、後退の場合は_backMoveSpeedを使用する。
-                    float speed = _moveInput > 0.0f ? _moveSpeed : _backMoveSpeed;
-                    Vector3 forward = Quaternion.Euler(0.0f, _hullYaw, 0.0f) * Vector3.forward;
-                    _position += forward * (_moveInput * speed * deltaTime);
+                    // スティックの方向を、車体の前と横に分ける。
+                    Vector3 direction = _driveDirection.normalized;
+                    Vector3 hullForward = Quaternion.Euler(0.0f, _hullYaw, 0.0f) * Vector3.forward;
+                    Vector3 hullRight = Quaternion.Euler(0.0f, _hullYaw, 0.0f) * Vector3.right;
+                    float throttle = Vector3.Dot(hullForward, direction);
+                    float steer = Vector3.Dot(hullRight, direction);
+
+                    // 横成分では、その場で回す。位置は動かない。
+                    _hullYaw += steer * _rotateSpeed * deltaTime;
+
+                    // 前後成分だけ、車体の向いている方向へ進める。
+                    float speed = throttle >= 0.0f ? _moveSpeed : _backMoveSpeed;
+                    _position += hullForward * (throttle * speed * deltaTime);
                 }
 
 
@@ -144,6 +121,18 @@ namespace nsApp
                 {
                     // Quaternion.Eulerを使って、砲塔のヨー角から回転を作り、その回転をVector3.forwardに掛けることで、砲塔の前方向のベクトルを取得する。
                     return Quaternion.Euler(0.0f, _turretYaw, 0.0f) * Vector3.forward;
+                }
+
+
+                /// <summary>
+                ///  車体の前方向を返す。
+                /// </summary>
+                /// <param name="diredction"> 進行方向を管理するベクトル。</param>
+                public void SetDrive(Vector3 diredction)
+                {
+                    // 進行方向のY成分を0にして水平方向のみに制限する。
+                    diredction.y = 0.0f;
+                    _driveDirection = diredction;
                 }
             }
         }

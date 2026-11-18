@@ -129,7 +129,6 @@ namespace nsApp
                     _position += forward * (_moveInput * speed * deltaTime);
                 }
 
-
                 /// <summary>
                 /// 発射可能かどうかをチェックし、可能であれば発射する。
                 /// </summary>
