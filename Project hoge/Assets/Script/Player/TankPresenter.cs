@@ -25,6 +25,12 @@ namespace nsApp
                 [Header("Predict")]
                 [SerializeField] private bool _showPredictedPath = true; //! 弾道予測を表示するか。
                 [SerializeField] private KeyCode _togglePredictKey = KeyCode.P; //! 予測表示の切り替えキー。
+                [Header("Audio")]
+                [SerializeField] private AudioSource _shotAudio; //! 発射音の再生用。
+                [SerializeField] private AudioClip _shotClip;   //! 発射SE（shot.wav）。
+                [SerializeField] private AudioSource _moveAudio; //! 移動音の再生用。
+                [SerializeField] private AudioClip _moveClip;   //! 移動SE（playerMove.wav）。
+                private const float MIN_MOVE_AUDIO_INPUT = 0.01f; //! 移動音を鳴らす入力の下限。
                 private TankModel _model; //! 戦車の判断。
 
 
@@ -44,6 +50,14 @@ namespace nsApp
                         _aimSpeed,
                         _shotInterval
                     );
+
+                    // 移動音のクリップを AudioSource にセットする。
+                    if (_moveAudio != null)
+                    {
+                        _moveAudio.clip = _moveClip;
+                        _moveAudio.loop = true;
+                        _moveAudio.playOnAwake = false;
+                    }
                 }
 
 
@@ -72,6 +86,8 @@ namespace nsApp
                 {
                     // 入力を読み取って戦車の判断に反映する。
                     _model.SetDrive(ReadDriveDirection());
+                    // 移動入力があるときだけ移動音を鳴らす。
+                    UpdateMoveAudio(ReadDriveDirection());
                     // マウスが指している方向を読み取って戦車の判断に反映する。
                     _model.SetAimDirection(ReadAimDirection());
                     // 砲塔の回転を計算して View に反映する。
@@ -113,6 +129,10 @@ namespace nsApp
                 /// </summary>
                 private void OnFired()
                 {
+                    // 発射音を再生する。
+                    if (_shotAudio != null && _shotClip != null)
+                        _shotAudio.PlayOneShot(_shotClip);
+
                     // 弾を発射する。
                     _view.SpawnBullet(_model.GetTurretForward());
                 }
@@ -172,6 +192,31 @@ namespace nsApp
                     Vector3 direction = hit - _view.HullPosition;
                     direction.y = 0.0f;
                     return direction;
+                }
+
+
+                /// <summary>
+                /// 移動入力に応じて、移動SEの再生／停止を切り替える。
+                /// </summary>
+                /// <param name="driveDirection">進行方向の入力。</param>
+                private void UpdateMoveAudio(Vector3 driveDirection)
+                {
+                    // AudioSource や Clip が無ければ何もしない。
+                    if (_moveAudio == null || _moveClip == null)
+                        return;
+
+                    // 入力があるときは再生、無いときは停止する。
+                    bool isMoving = driveDirection.sqrMagnitude >= MIN_MOVE_AUDIO_INPUT;
+                    if (isMoving)
+                    {
+                        if (!_moveAudio.isPlaying)
+                            _moveAudio.Play();
+                    }
+                    else
+                    {
+                        if (_moveAudio.isPlaying)
+                            _moveAudio.Stop();
+                    }
                 }
             }
         }
