@@ -18,6 +18,11 @@ namespace nsApp
             [RequireComponent(typeof(BulletView))]
             public class BulletPresenter : MonoBehaviour
             {
+                [Header("Audio")]
+                [SerializeField] private AudioSource _audio; //! SE再生用。
+                [SerializeField] private AudioClip _hitWallClip; //! 壁反射（hit_wall.wav）。
+                [SerializeField] private AudioClip _explosionClip; //! 爆発（explosion.wav）。
+                [SerializeField] private AudioClip _destroyClip; //! 撃破（destroy.wav）。
                 [SerializeField] private BulletView _view; //! 見た目。
                 [SerializeField] private float _speed = 20.0f; //! 弾速。
                 [SerializeField] private float _lifeTime = 3.0f; //! 消えるまでの秒数。今のプレハブに合わせてある。
@@ -76,13 +81,28 @@ namespace nsApp
                     if (_model == null)
                         return;
 
+                    // このフレーム開始時点の反射回数を覚えておく。
+                    int bouncesBefore = _model.Bounces;
+
                     // このフレームの移動結果を見た目へ反映する。
                     TankView hit = _model.Simulate(Time.fixedDeltaTime, _view.Radius, _owner);
                     _view.Apply(_model.Position, _model.Direction);
 
+                    // 壁・障害物で跳ねたら、反射音を鳴らす。
+                    if (_model.Bounces > bouncesBefore && _audio != null && _hitWallClip != null)
+                        _audio.PlayOneShot(_hitWallClip);
+
                     // 戦車に当たったら、その戦車と弾を消す。跳ね返った自分も含む。
                     if (hit != null)
                     {
+                        // 弾を消しても音が残るよう、その場でワンショット再生する。
+                        Vector3 sePosition = transform.position;
+                        if (_destroyClip != null)
+                            AudioSource.PlayClipAtPoint(_destroyClip, sePosition);
+                        if (_explosionClip != null)
+                            AudioSource.PlayClipAtPoint(_explosionClip, sePosition);
+
+                        // 破棄。
                         Destroy(hit.gameObject);
                         Destroy(gameObject);
                         return;

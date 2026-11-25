@@ -21,6 +21,7 @@ namespace nsApp
                 public Vector3 Position => _position; //! 弾丸の座標。
                 public Vector3 Direction => _direction; //! 弾丸の進行方向。
                 public bool IsExploded => _age >= _lifeTime; //! 弾丸が爆発したかどうか。寿命を終えていればtrue。
+                public int Bounces => _bounces; //! 壁で反射した回数。
                 private const float FlatNormalLimit = 0.5f; //! 地面とみなす法線のY成分。
                 private const float PathSkin = 0.05f; //! 壁に埋まらないように離す距離。
                 private const int MaxSegments = 48; //! 角で無限に反射しないための区間数。
