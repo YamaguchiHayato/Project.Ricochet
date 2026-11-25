@@ -167,5 +167,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::nsApp.nsActor.nsPlayer.BulletPresenter
   _view: {fileID: -7879179315611040590}
-  _speed: 20
-  _lifeTime: 3
+  _speed: 15
+  _lifeTime: 1

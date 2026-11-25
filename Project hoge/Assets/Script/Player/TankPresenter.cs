@@ -22,6 +22,9 @@ namespace nsApp
                 [SerializeField] private float _aimSpeed = 720.0f; //! 砲塔の回転速度。
                 [Header("Shot")]
                 [SerializeField] private float _shotInterval = 0.4f; //! 次の弾までの待ち時間。
+                [Header("Predict")]
+                [SerializeField] private bool _showPredictedPath = true; //! 弾道予測を表示するか。
+                [SerializeField] private KeyCode _togglePredictKey = KeyCode.P; //! 予測表示の切り替えキー。
                 private TankModel _model; //! 戦車の判断。
 
 
@@ -75,8 +78,19 @@ namespace nsApp
                     _model.SimulateAim(Time.deltaTime);
                     // 砲塔の回転結果を View に反映する。
                     _view.ApplyTurret(_model.TurretYaw);
-                    // 弾道予測の点を更新し、確認用の線を View に描かせる。
-                    Vector3[] path = _view.PredictBulletPath(_model.GetTurretForward()); _view.DrawPredictedPath(path);
+
+                    // 予測表示のオンオフを管理。
+                    if (Input.GetKeyDown(_togglePredictKey))
+                        _showPredictedPath = !_showPredictedPath;
+
+                    // 弾道予測がオンの時だけ描画する。
+                    if (_showPredictedPath)
+                    {
+                        // 弾道予測の点を更新し、確認用の線を View に描かせる。
+                        Vector3[] path = _view.PredictBulletPath(_model.GetTurretForward()); 
+                        _view.DrawPredictedPath(path);
+                    }
+
                     // マウスの左クリックで弾を発射する。
                     if (Input.GetMouseButtonDown(0))
                         _model.TryFire(Time.time);
